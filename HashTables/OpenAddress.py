@@ -7,6 +7,9 @@ class OpenAddress:
         for i in range(num_cells):
             self.cells.append(None)
 
+    def get_collision(self):
+        return self.collision
+
     def hash(self, index, key):
         return ((key % self.num_cells) + index) % self.num_cells
 

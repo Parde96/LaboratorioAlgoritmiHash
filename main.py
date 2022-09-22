@@ -15,32 +15,71 @@ con per vedere che effettivamente l'open address perde di prestazioni rispetto a
 """
 
 
-def draw_plot(x, y1, y2, name_image, name_plot, y_name):
+def draw_plot(x_lf, y1_ct, y2_ot, y1_cc, y2_oc, name_file_image, name_plot, y_name):
 
     plt.figure(dpi=1200)
-    plt.plot(x, y2, label="Open")
-    plt.plot(x, y1, label="Chained")
-    plt.xlabel('Fattore di caricamento')
-    plt.ylabel('Tempi di ' + y_name)
-    plt.title(name_plot + "    Numero di test " + str(num_test))
-    plt.legend()
-    plt.savefig("Grafici test/Grafico " + name_image)
-    # plt.show()
-
     exp_x = []
     exp_y1 = []
     exp_y2 = []
-    for i in range(len(x)):
-        exp_x.append("{:.2e}".format(x[i]))
-        exp_y1.append("{:.2e}".format(y1[i]))
-        exp_y2.append("{:.2e}".format(y2[i]))
+    for i in range(len(x_lf)):
+        exp_x.append("{:.2e}".format(x_lf[i]))
+        exp_y1.append("{:.2e}".format(y1_ct[i]))
+        exp_y2.append("{:.2e}".format(y2_ot[i]))
 
-    fig = go.Figure(data=[go.Table(header=dict(
-        values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
-        cells=dict(values=[exp_x, exp_y1, exp_y2]))])
-    # fig.write_image("Test" + str(index) + ".pdf")
-    fig.write_html("Tabelle test/Tabella " + name_image + ".html")
-    # fig.show()
+    if name_plot == "Test inserimento":
+        # plt.figure(dpi=3000)
+        fig, axs = plt.subplots(2)
+        fig.suptitle(name_plot + "    Numero di test " + str(num_test), fontsize=35)
+        axs[0].set_title("Tempi inserimento", fontsize=20)
+        axs[0].plot(x_lf, y2_ot, label="Indirizzamento aperto")
+        axs[0].plot(x_lf, y1_ct, label="Concatenamento")
+        axs[0].set_xlabel("Fattore di caricamento", fontsize=20)
+        axs[0].set_ylabel(y_name, fontsize=20)
+        # axs[0].ylabel('Tempi')
+        axs[0].legend()
+
+        axs[1].set_title("Collisioni", fontsize=20)
+        axs[1].plot(x_lf, y2_oc, label="Indirizzamento aperto")
+        axs[1].plot(x_lf, y1_cc, label="Concatenamento")
+        axs[1].set_xlabel("Fattore di caricamento", fontsize=20)
+        axs[1].set_ylabel("Collisioni", fontsize=20)
+        # axs[1].ylabel('Collisioni')
+        axs[1].legend()
+        #plt.subplots_adjust(hspace=0.4)
+        # plt.show()
+        fig.set_figwidth(15)
+        fig.set_figheight(15)
+
+        tab_tempi = go.Figure(data=[go.Table(header=dict(
+            values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
+            cells=dict(values=[exp_x, exp_y1, exp_y2]))])
+        # fig.write_image("Test" + str(index) + ".pdf")
+        tab_tempi.write_html("Tabelle test/Tabella " + name_file_image + ".html")
+        # fig.show()
+
+        tab_collisions = go.Figure(data=[go.Table(header=dict(
+            values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
+            cells=dict(values=[exp_x, y1_cc, y2_oc]))])
+        tab_collisions.write_html("Tabelle test/Tabella Collisioni" + ".html")
+    else:
+        # plt.figure(dpi=1200)
+        plt.title(name_plot + "    Numero di test " + str(num_test))
+        plt.plot(x_lf, y2_ot, label="Indirizzamento aperto")
+        plt.plot(x_lf, y1_ct, label="Concatenamento")
+        plt.xlabel('Fattore di caricamento')
+        plt.ylabel(y_name)
+        plt.legend()
+        # plt.savefig("Grafici test/Grafico " + name_file_image)
+
+        # plt.show()
+
+        tab_tempi = go.Figure(data=[go.Table(header=dict(
+            values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
+            cells=dict(values=[exp_x, exp_y1, exp_y2]))])
+        # fig.write_image("Test" + str(index) + ".pdf")
+        tab_tempi.write_html("Tabelle test/Tabella " + name_file_image + ".html")
+        # fig.show()
+    plt.savefig("Grafici test/Grafico " + name_file_image)
 
 
 def test():
@@ -80,11 +119,13 @@ def test():
     open_address.print()
 
 
-def testing_insert(num_test):
+def testing_insert():
 
     num_cells = 101
     all_insert_times_chained = []
     all_insert_times_open = []
+    all_collisions_chained = []
+    all_collisions_open = []
     loading_factor = []
     for i in range(num_cells + 100):
         loading_factor.append(i / num_cells)
@@ -93,6 +134,8 @@ def testing_insert(num_test):
         open_add = OpenAddress(num_cells)
         insert_time_chained = []
         insert_time_open = []
+        collisions_chained = []
+        collisions_open = []
         val_to_insert = []
         for j in range(num_cells + 100):
             val_to_insert.append(random.randint(-10000, 100000))
@@ -102,31 +145,44 @@ def testing_insert(num_test):
             chained.insert(Node(val_to_insert[j]))
             end = timer()
             insert_time_chained.append(end - start)
+            collisions_chained.append(chained.get_collision())
 
             start = timer()
             open_add.insert(val_to_insert[j])
             end = timer()
             insert_time_open.append(end - start)
+            collisions_open.append(open_add.get_collision())
 
         all_insert_times_chained.append(insert_time_chained)
         all_insert_times_open.append(insert_time_open)
+        all_collisions_chained.append(collisions_chained)
+        all_collisions_open.append(collisions_open)
 
-    mean_chained = []
-    mean_open = []
+    mean_times_chained = []
+    mean_times_open = []
+    mean_collisions_chained = []
+    mean_collisions_open = []
     for i in range(len(loading_factor)):
-        mean_chained.append([])
-        mean_open.append([])
+        mean_times_chained.append([])
+        mean_times_open.append([])
+        mean_collisions_chained.append([])
+        mean_collisions_open.append([])
         for j in range(num_test):
-            mean_chained[i].append(all_insert_times_chained[j][i])
-            mean_open[i].append(all_insert_times_open[j][i])
-        mean_chained[i] = mean(mean_chained[i])
-        mean_open[i] = mean(mean_open[i])
+            mean_times_chained[i].append(all_insert_times_chained[j][i])
+            mean_times_open[i].append(all_insert_times_open[j][i])
+            mean_collisions_chained[i].append(all_collisions_chained[j][i])
+            mean_collisions_open[i].append(all_collisions_open[j][i])
+        mean_times_chained[i] = mean(mean_times_chained[i])
+        mean_times_open[i] = mean(mean_times_open[i])
+        mean_collisions_chained[i] = mean(mean_collisions_chained[i])
+        mean_collisions_open[i] = mean(mean_collisions_open[i])
     #draw_plot(loading_factor, mean_chained, mean_open, "test inserimento" + str(i+1),
      #         "Test inserimento", "inserimento")
-    draw_plot(loading_factor, mean_chained, mean_open, "test inserimento", "Test inserimento", "inserimento")
+    draw_plot(loading_factor, mean_times_chained, mean_times_open, mean_collisions_chained, mean_collisions_open,
+              "test inserimento", "Test inserimento", "Inserimento")
 
 
-def testing_search_success(num_test):
+def testing_search_success():
     num_cells = 101
     all_search_times_chained = []
     all_search_times_open = []
@@ -171,10 +227,10 @@ def testing_search_success(num_test):
         mean_chained[i] = mean(mean_chained[i])
         mean_open[i] = mean(mean_open[i])
 
-    draw_plot(loading_factor, mean_chained, mean_open, "test ricerca", "Test ricerca", "ricerca")
+    draw_plot(loading_factor, mean_chained, mean_open, None, None, "test ricerca", "Test ricerca", "Tempi ricerca")
 
 
-def testing_search_no_success(num_test):
+def testing_search_no_success():
     num_cells = 101
     all_search_times_chained = []
     all_search_times_open = []
@@ -219,8 +275,8 @@ def testing_search_no_success(num_test):
         mean_chained[i] = mean(mean_chained[i])
         mean_open[i] = mean(mean_open[i])
 
-    draw_plot(loading_factor, mean_chained, mean_open, "test ricerca senza successo", "Test ricerca senza successo",
-              "ricerca senza successo")
+    draw_plot(loading_factor, mean_chained, mean_open, None, None, "test ricerca senza successo",
+              "Test ricerca senza successo", "Tempi ricerca senza successo")
 
 
 if __name__ == '__main__':
@@ -230,7 +286,7 @@ if __name__ == '__main__':
     print("......")
     print()
 
-    num_test = 4
-    testing_insert(num_test)
-    testing_search_success(num_test)
-    testing_search_no_success(num_test)
+    num_test = 10
+    testing_insert()
+    testing_search_success()
+    testing_search_no_success()

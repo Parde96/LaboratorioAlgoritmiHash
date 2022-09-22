@@ -10,6 +10,9 @@ class Chained:
         for i in range(num_cells):
             self.cells.append(LinkedList())
 
+    def get_collision(self):
+        return self.collision
+
     def hash(self, key):
         return key % self.num_cells
 
