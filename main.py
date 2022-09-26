@@ -14,7 +14,7 @@ con per vedere che effettivamente l'open address perde di prestazioni rispetto a
 """
 
 
-def draw_plot(x_lf, y1_ct, y2_ot, y1_cc, y2_oc, name_file_image, name_plot, y_name):
+def draw_plot(x_lf, y1_c, y2_o, name_file_image, name_plot, y_name):
     plt.figure(dpi=1200)
     exp_x = []
     exp_y1 = []
@@ -22,50 +22,20 @@ def draw_plot(x_lf, y1_ct, y2_ot, y1_cc, y2_oc, name_file_image, name_plot, y_na
     # scrivo i tempi in notazione scientifica da mettere poi nelle tabelle
     for i in range(len(x_lf)):
         exp_x.append("{:.2e}".format(x_lf[i]))
-        exp_y1.append("{:.2e}".format(y1_ct[i]))
-        exp_y2.append("{:.2e}".format(y2_ot[i]))
+        exp_y1.append("{:.2e}".format(y1_c[i]))
+        exp_y2.append("{:.2e}".format(y2_o[i]))
 
-    # se il chiamante è l'inserimento allora disegniamo due grafici, uno è delle collisioni
-    if name_plot == "Test inserimento":
-        fig, axs = plt.subplots(2)
-        fig.suptitle(name_plot + "    Numero di test " + str(num_test), fontsize=35)
-        axs[0].set_title("Tempi inserimento", fontsize=20)
-        axs[0].plot(x_lf, y2_ot, label="Indirizzamento aperto")
-        axs[0].plot(x_lf, y1_ct, label="Concatenamento")
-        axs[0].set_xlabel("Fattore di caricamento", fontsize=20)
-        axs[0].set_ylabel(y_name, fontsize=20)
-        axs[0].legend()
+    plt.title(name_plot + "    Numero di test " + str(num_test))
+    plt.plot(x_lf, y2_o, label="Indirizzamento aperto")
+    plt.plot(x_lf, y1_c, label="Concatenamento")
+    plt.xlabel('Fattore di caricamento')
+    plt.ylabel(y_name)
+    plt.legend()
 
-        axs[1].set_title("Collisioni", fontsize=20)
-        axs[1].plot(x_lf, y2_oc, label="Indirizzamento aperto")
-        axs[1].plot(x_lf, y1_cc, label="Concatenamento")
-        axs[1].set_xlabel("Fattore di caricamento", fontsize=20)
-        axs[1].set_ylabel("Collisioni", fontsize=20)
-        axs[1].legend()
-        fig.set_figwidth(15)
-        fig.set_figheight(15)
-
-        tab_tempi = go.Figure(data=[go.Table(header=dict(
-            values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
-            cells=dict(values=[exp_x, exp_y1, exp_y2]))])
-        tab_tempi.write_html("Tabelle test/Tabella " + name_file_image + ".html")
-
-        tab_collisions = go.Figure(data=[go.Table(header=dict(
-            values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
-            cells=dict(values=[exp_x, y1_cc, y2_oc]))])
-        tab_collisions.write_html("Tabelle test/Tabella Collisioni" + ".html")
-    else:
-        plt.title(name_plot + "    Numero di test " + str(num_test))
-        plt.plot(x_lf, y2_ot, label="Indirizzamento aperto")
-        plt.plot(x_lf, y1_ct, label="Concatenamento")
-        plt.xlabel('Fattore di caricamento')
-        plt.ylabel(y_name)
-        plt.legend()
-
-        tab_tempi = go.Figure(data=[go.Table(header=dict(
-            values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
-            cells=dict(values=[exp_x, exp_y1, exp_y2]))])
-        tab_tempi.write_html("Tabelle test/Tabella " + name_file_image + ".html")
+    tab_tempi = go.Figure(data=[go.Table(header=dict(
+        values=['Fattore di caricamento', 'Concatenamento', 'Indirizzamento aperto']),
+        cells=dict(values=[exp_x, exp_y1, exp_y2]))])
+    tab_tempi.write_html("Tabelle test/Tabella " + name_file_image + ".html")
     plt.savefig("Grafici test/Grafico " + name_file_image)
 
 
@@ -176,9 +146,12 @@ def testing_insert():
         mean_collisions_chained[i] = mean(mean_collisions_chained[i])
         mean_collisions_open[i] = mean(mean_collisions_open[i])
 
-    # chiamo la funzione per andare a disegnare i grafici e le tabelle
-    draw_plot(loading_factor, mean_times_chained, mean_times_open, mean_collisions_chained, mean_collisions_open,
-              "test inserimento", "Test inserimento", "Inserimento")
+    # chiamo le funzioni per andare a disegnare i grafici e le tabelle, per le collisioni andiamo ad usare meno valori
+    # del fattore di caricamento
+    draw_plot(loading_factor[0:num_cells + 10], mean_collisions_chained[0:num_cells + 10],
+              mean_collisions_open[0:num_cells + 10], "collisioni", "Collisioni", "Collisioni")
+    draw_plot(loading_factor, mean_times_chained, mean_times_open, "test inserimento", "Test inserimento",
+              "Inserimento")
 
 
 def testing_search_success():
@@ -238,7 +211,7 @@ def testing_search_success():
         mean_open[i] = mean(mean_open[i])
 
     # chiamo la funzione per andare a disegnare i grafici e le tabelle
-    draw_plot(loading_factor, mean_chained, mean_open, None, None, "test ricerca", "Test ricerca", "Tempi ricerca")
+    draw_plot(loading_factor, mean_chained, mean_open, "test ricerca", "Test ricerca", "Tempi ricerca")
 
 
 def testing_search_no_success():
@@ -303,8 +276,8 @@ def testing_search_no_success():
         mean_open[i] = mean(mean_open[i])
 
     # chiamo la funzione per andare a disegnare i grafici e le tabelle
-    draw_plot(loading_factor, mean_chained, mean_open, None, None, "test ricerca senza successo",
-              "Test ricerca senza successo", "Tempi ricerca senza successo")
+    draw_plot(loading_factor, mean_chained, mean_open, "test ricerca senza successo", "Test ricerca senza successo",
+              "Tempi ricerca senza successo")
 
 
 if __name__ == '__main__':
@@ -317,5 +290,5 @@ if __name__ == '__main__':
     num_test = 10
     num_cells = 109  # 1009, 503, 109
     testing_insert()
-    testing_search_success()
-    testing_search_no_success()
+    # testing_search_success()
+    # testing_search_no_success()
