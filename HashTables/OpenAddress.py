@@ -2,6 +2,7 @@ class OpenAddress:
 
     def __init__(self, num_cells):
         self.collision = 0
+        self.explorations = 1
         self.num_cells = num_cells
         self.cells = []
         for i in range(num_cells):
@@ -10,19 +11,27 @@ class OpenAddress:
     def get_collision(self):
         return self.collision
 
+    def get_explorations(self):
+        return self.explorations
+
     def hash(self, index, key):
         return ((key % self.num_cells) + index) % self.num_cells
 
     def insert(self, key):
+        collided = False
         i = 0
         while True:
+            self.explorations = i + 1
             j = self.hash(i, key)
             if self.cells[j] is None or self.cells[j] == "DEL":
                 self.cells[j] = key
                 return j
             else:
                 i += 1
-                self.collision += 1
+                # self.explorations = i
+                if not collided:
+                    self.collision += 1
+                    collided = True
             if i == self.num_cells:
                 break
         return "Error"
@@ -30,6 +39,7 @@ class OpenAddress:
     def search(self, key):
         i = 0
         while True:
+            self.explorations = i + 1
             j = self.hash(i, key)
             if self.cells[j] == key:
                 return j
